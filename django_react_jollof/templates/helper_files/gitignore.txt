@@ -1,0 +1,101 @@
+# =========================
+# Global Ignored Files
+# =========================
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+.history
+*.sublime-project
+*.sublime-workspace
+
+# =========================
+# Backend (Django) Ignored Files
+# =========================
+
+# Python compiled files
+**/backend/__pycache__/
+**/backend/**/*.pyc
+**/backend/**/*.pyo
+**/backend/*.pyc
+**/backend/*.pyo
+
+# C extensions
+**/backend/*.so
+
+# Distribution / packaging
+**/backend/build/
+**/backend/dist/
+**/backend/*.egg-info/
+**/backend/.eggs/
+
+# Virtual environments
+**/backend/venv/
+**/backend/env/
+**/backend/.env
+
+# Django specific
+**/backend/*.sqlite3
+**/backend/media/
+**/backend/staticfiles/
+
+# Celery beat schedule file
+**/backend/celerybeat-schedule
+
+# Coverage reports
+**/backend/htmlcov/
+**/backend/.coverage
+**/backend/.coverage.*
+**/backend/.cache/
+
+# History directories or files
+**/backend/history/
+**/backend/history.*
+**/backend/*/history/
+**/backend/*/history.*
+
+# =========================
+# Frontend (React) Ignored Files
+# =========================
+
+# Node modules
+**/frontend/node_modules/
+
+# Build output
+**/frontend/build/
+**/frontend/dist/
+**/frontend/.next/
+**/frontend/.turbo/
+
+# Production environment files
+**/frontend/.env
+**/frontend/.env.production
+**/frontend/.env.local
+**/frontend/.env.development.local
+
+# Miscellaneous
+**/frontend/.cache/
+**/frontend/.parcel-cache/
+**/frontend/.eslintcache
+**/frontend/.vite/
+
+# Testing
+**/frontend/coverage/
+**/frontend/jest/
+
+# History directories or files
+**/frontend/history/
+**/frontend/history.*
+**/frontend/*/history/
+**/frontend/*/history.*
