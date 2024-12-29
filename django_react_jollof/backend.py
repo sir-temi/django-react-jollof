@@ -74,13 +74,11 @@ def update_settings(social_login: str) -> None:
     try:
         with open(settings_path, "a") as file:
             # Add common configurations
-            common_config: str = dedent(
+            common_config = dedent(
                 """
-                
                 # Set by django-react-jollof
 
                 import os
-
 
                 # Installed apps
                 INSTALLED_APPS += [
@@ -123,28 +121,38 @@ def update_settings(social_login: str) -> None:
                 CORS_ALLOWED_ORIGINS = [
                     "http://localhost:5173",  # React frontend
                 ]
-                """
+            """
             )
             file.write(common_config)
 
-            # Add social login configurations if applicable
-            if social_login == "google":
-                social_config_start: str = dedent(
+            # Add social login configurations only if a social login provider is selected
+            if social_login != "none":
+                # Social account providers section
+                social_config_start = dedent(
                     """
                     # Social account providers
                     SOCIALACCOUNT_PROVIDERS = {
-                    """
+                """
                 )
                 file.write(social_config_start)
 
+                # Google configuration
                 if social_login == "google":
-                    google_config: str = dedent(
+                    google_config = dedent(
                         f"""
-                        "google": {{
-                            "APP": {{
-                                "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-                                "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-                                "key": "",
+                        'google': {{
+                            'SCOPE': [
+                                'profile',
+                                'email',
+                            ],
+                            'AUTH_PARAMS': {{
+                                'access_type': 'online',
+                            }},
+                            'OAUTH_PKCE_ENABLED': True,
+                            'APP': {{
+                                'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+                                'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+                                'key': '',
                             }}
                         }},
                     """
@@ -153,7 +161,7 @@ def update_settings(social_login: str) -> None:
 
                 file.write("}\n")  # Close the SOCIALACCOUNT_PROVIDERS dictionary
 
-        click.echo(f"Updated '{settings_path}' with the selected configurations.")
+            click.echo(f"Updated '{settings_path}' with the selected configurations.")
 
     except IOError as e:
         click.echo(f"IOError while writing to '{settings_path}': {e}")
