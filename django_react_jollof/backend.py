@@ -252,7 +252,7 @@ def scaffold_backend(template_dir: str, social_login: str) -> Optional[Dict[str,
         click.secho("Migrations applied successfully.", fg="green")
 
     except subprocess.CalledProcessError as e:
-        click.secho(f"Failed to apply migrations.\nError: {e.stderr.strip()}", fg="red")
+        click.secho(f"Failed to apply migrations.\nError: {e.stderr}", fg="red")
         sys.exit(1)
 
     try:

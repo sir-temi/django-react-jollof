@@ -1,7 +1,5 @@
-click>=8.0
-requests>=2.0
-python-decouple>=3.6
-djangorestframework>=3.13
-djangorestframework-simplejwt>=5.2
-django-cors-headers>=3.13
-django-allauth>=0.53
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+django-allauth
+python-decouple
