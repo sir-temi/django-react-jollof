@@ -117,8 +117,8 @@ Example:
 -   Backend `.env`:
 
     ```plaintext
-    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=<google_client_id>
-    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=<google_client_secret>
+    GOOGLE_CLIENT_ID=<google_client_id>
+    GOOGLE_CLIENT_SECRET=<google_client_secret>
     ```
 
 -   Frontend `.env`:
