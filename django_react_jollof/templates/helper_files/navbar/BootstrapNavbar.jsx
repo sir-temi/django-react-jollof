@@ -1,121 +1,81 @@
-// src/pages/Login.jsx
-import { useState } from "react";
-import PersonIcon from "@mui/icons-material/Person";
-import LockIcon from "@mui/icons-material/Lock";
-import { login as loginApi } from "../actions/authActions";
-import { useSnackbar } from "notistack";
-import AuthButtons from "../components/auth_buttons/AuthButtons";
+import { useContext } from "react";
+import Nav from "react-bootstrap/Nav";
+import Navbar from "react-bootstrap/Navbar";
+import Form from "react-bootstrap/Form";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { NavLink } from "react-router-dom";
+import { ThemeContext } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import TextField from "@mui/material/TextField";
-import InputAdornment from "@mui/material/InputAdornment";
+import { logout as logoutUser } from "../actions/authActions";
+import { faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
 
-const Login = () => {
-    const navigate = useNavigate();
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false); // Loading state
-    const [errorMessage, setErrorMessage] = useState(""); // Error message state
-    const { login } = useAuth();
-    const { enqueueSnackbar } = useSnackbar();
-
-    // Handle form submission
-    const handleLogin = async (e) => {
-        e.preventDefault();
-
-        // Simple form validation
-        if (!username || !password) {
-            setErrorMessage("Please enter both username and password.");
-            return;
-        }
-
-        setIsLoading(true); // Set loading state
-
-        const result = await loginApi(username, password, login);
-
-        setIsLoading(false); // Reset loading state
-
-        // Handle login result
-        if (result.success) {
-            enqueueSnackbar(result.message, { variant: "success" });
-            navigate("/profile");
-        } else {
-            enqueueSnackbar(result.message, { variant: "error" });
-            setErrorMessage(result.message); // Display the error message
-        }
-    };
+const NavBar = () => {
+    const { logout } = useAuth();
+    const { isDarkMode, toggleTheme } = useContext(ThemeContext);
+    const { isLoggedIn } = useAuth();
 
     return (
-        <div className="login-container">
-            <div className="login-card">
-                <h2 className="login-title">Login</h2>
-                <form onSubmit={handleLogin} className="login-form">
-                    <div className="input-group">
-                        <TextField
-                            placeholder="Username"
-                            type="text"
-                            variant="outlined"
-                            fullWidth
-                            margin="normal"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                            aria-label="Username"
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <PersonIcon />
-                                    </InputAdornment>
-                                ),
-                            }}
+        <Navbar
+            expand="lg"
+            className="px-5 py-3"
+            bg={isDarkMode ? "dark" : "light"}
+            data-bs-theme={isDarkMode ? "dark" : "light"}
+            sticky="top"
+        >
+            <Navbar.Brand>
+                <NavLink to="/" className="text-decoration-none">
+                    Jesjay
+                </NavLink>
+            </Navbar.Brand>
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+                <Nav className="ms-auto">
+                    {!isLoggedIn && (
+                        <>
+                            <NavLink to="/login" className="nav-link">
+                                Login
+                            </NavLink>
+                            <NavLink to="/register" className="nav-link">
+                                Register
+                            </NavLink>
+                        </>
+                    )}
+                    {isLoggedIn && (
+                        <>
+                            <NavLink to="/profile" className="nav-link">
+                                Profile
+                            </NavLink>
+                            <NavLink
+                                to="/login"
+                                className="nav-link"
+                                onClick={() => {
+                                    logoutUser(logout);
+                                }}
+                            >
+                                Log Out
+                            </NavLink>
+                        </>
+                    )}
+                    <div className="d-flex align-items-center">
+                        <Form.Check
+                            type="switch"
+                            id="theme-switch"
+                            label={
+                                <FontAwesomeIcon
+                                    icon={isDarkMode ? faMoon : faSun}
+                                />
+                            }
+                            checked={isDarkMode}
+                            onChange={toggleTheme}
+                            className="mb-0 ms-3"
+                            style={{ cursor: "pointer" }}
+                            aria-label="Toggle dark and light mode"
                         />
                     </div>
-                    <div className="input-group">
-                        <TextField
-                            placeholder="Password"
-                            type="password"
-                            variant="outlined"
-                            fullWidth
-                            margin="normal"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            aria-label="Password"
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <LockIcon />
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{ marginTop: 0 }}
-                        />
-                    </div>
-                    {errorMessage && (
-                        <p className="error-message">{errorMessage}</p>
-                    )}{" "}
-                    {/* Display error */}
-                    <div className="button-group">
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="login-button"
-                        >
-                            {isLoading ? (
-                                <div className="spinner"></div>
-                            ) : (
-                                "Login"
-                            )}
-                        </button>
-                    </div>
-                </form>
-                <div className="divider">
-                    <span>OR</span>
-                </div>
-                <AuthButtons />
-            </div>
-        </div>
+                </Nav>
+            </Navbar.Collapse>
+        </Navbar>
     );
 };
 
-export default Login;
+export default NavBar;

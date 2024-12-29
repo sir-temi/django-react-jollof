@@ -92,7 +92,7 @@ button:disabled {
 }
 
 /* ---------------------------
-   Login Page Styles
+   3. Login Page Styles
    --------------------------- */
 
 /* Container to center the login card */
@@ -152,13 +152,12 @@ button:disabled {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 100%;
 }
 
 /* Input group styling */
 .input-group {
     position: relative;
-    max-width: 100%;
+    width: 100%;
 }
 
 /* Input icon styling */
@@ -709,51 +708,4 @@ button:disabled {
         font-size: 14px;
         padding: 10px 0;
     }
-}
-
-/* Override AppBar styles for light mode */
-.MuiAppBar-root {
-    background-color: var(--background-color) !important;
-    color: var(--text-color) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Light mode shadow */
-    transition: box-shadow 0.3s ease;
-}
-
-/* Override AppBar styles for dark mode */
-.dark-theme .MuiAppBar-root {
-    background-color: var(--background-color) !important;
-    color: var(--text-color) !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Dark mode shadow */
-}
-
-/* Style for the InputAdornment Icon */
-.MuiInputAdornment-root .MuiSvgIcon-root {
-    color: var(--input-text-color);
-}
-
-/* Dark mode TextField border color */
-.dark-theme .MuiOutlinedInput-notchedOutline {
-    border-color: var(--input-border-color);
-}
-
-/* Dark mode TextField input text color */
-.dark-theme .MuiInputBase-input {
-    color: var(--input-text-color);
-}
-
-/* Dark mode placeholder color */
-.dark-theme .MuiInputBase-input::placeholder {
-    color: var(--placeholder-color);
-}
-
-.theme-switch {
-    margin-left: 10px;
-}
-
-.theme-switch .MuiSwitch-switchBase.Mui-checked {
-    color: #fff;
-}
-
-.theme-switch .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
-    background-color: var(--divider-color);
 }
