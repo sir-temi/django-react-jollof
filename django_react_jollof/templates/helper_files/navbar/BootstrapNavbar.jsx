@@ -24,7 +24,7 @@ const NavBar = () => {
         >
             <Navbar.Brand>
                 <NavLink to="/" className="text-decoration-none">
-                    Jesjay
+                    {{ PROJECT_NAME }}
                 </NavLink>
             </Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />

@@ -3,17 +3,33 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Dict
+from typing import Dict, Optional
 
 import click
+import logging
 
 from django_react_jollof.utils import FRONTEND_DEPENDENCIES, copy_templates, delete_file
+
+# Set up logging for better traceability
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Define constants for npm commands
+NPM_CREATE_VITE_CMD = [
+    "npm",
+    "create",
+    "vite@4.4.0",
+    "frontend",
+    "--",
+    "--template",
+    "react",
+]
+NPM_INSTALL_CMD = ["npm", "install"]
 
 
 def check_node_version() -> None:
     """
     Ensure the user has Node.js version 20 or higher.
-
     Exits the program if the Node.js version is insufficient or Node.js is not installed.
     """
     try:
@@ -26,22 +42,13 @@ def check_node_version() -> None:
 
         # Enforce minimum Node.js version 20
         if major_version < 20:
-            click.echo("Error: Node.js version 20 or higher is required.")
             click.echo(
-                f"Your Node.js version: {version_str}. Please upgrade Node.js and try again."
+                f"Error: Node.js version 20 or higher is required. Your version: {version_str}. Please upgrade Node.js."
             )
             sys.exit(1)
-    except subprocess.CalledProcessError:
-        click.echo("Error: Failed to retrieve Node.js version.")
-        sys.exit(1)
-    except FileNotFoundError:
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError, ValueError):
         click.echo(
-            "Error: Node.js is not installed. Please install Node.js version 20 or higher."
-        )
-        sys.exit(1)
-    except (IndexError, ValueError):
-        click.echo(
-            "Error: Unable to parse Node.js version. Ensure Node.js is correctly installed."
+            "Error: Node.js is not installed or has an invalid version. Please install Node.js version 20 or higher."
         )
         sys.exit(1)
 
@@ -49,42 +56,37 @@ def check_node_version() -> None:
 def replace_placeholder_in_file(
     file_path: str, placeholder: str, replacement: str
 ) -> None:
-    """
-    Replace a placeholder in a file with a replacement string.
-
-    Args:
-        file_path (str): The path to the file where replacement will occur.
-        placeholder (str): The placeholder string to be replaced.
-        replacement (str): The string to replace the placeholder with.
-
-    Raises:
-        FileNotFoundError: If the specified file does not exist.
-        IOError: If there's an error reading or writing the file.
-    """
+    """Replace a placeholder in a file with a replacement string."""
     if not os.path.isfile(file_path):
-        # logger.error(f"File '{file_path}' does not exist for placeholder replacement.")
+        click.echo(f"File '{file_path}' does not exist for placeholder replacement.")
         raise FileNotFoundError(f"File '{file_path}' does not exist.")
 
     try:
         with open(file_path, "r") as file:
-            content = file.read()
+            content: str = file.read()
 
         if placeholder not in content:
-            # logger.warning(f"Placeholder '{placeholder}' not found in '{file_path}'. No replacement made.")
+            click.echo(
+                f"Placeholder '{placeholder}' not found in '{file_path}'. No replacement made."
+            )
             return
 
-        updated_content = content.replace(placeholder, replacement.title())
+        updated_content: str = content.replace(placeholder, replacement.title())
 
         with open(file_path, "w") as file:
             file.write(updated_content)
 
-        # logger.info(f"Replaced placeholder '{placeholder}' with '{replacement}' in '{file_path}'.")
+        click.echo(
+            f"Replaced placeholder '{placeholder}' with '{replacement}' in '{file_path}'."
+        )
     except Exception as e:
-        # logger.error(f"Error replacing placeholder in '{file_path}': {e}")
+        click.echo(f"Error replacing placeholder in '{file_path}': {e}")
         raise
 
 
-def copy_template_file(template_path, destination_path, description):
+def copy_template_file(
+    template_path: str, destination_path: str, description: str
+) -> None:
     """Copy a template file to the destination and handle errors."""
     try:
         shutil.copy(template_path, destination_path)
@@ -105,22 +107,9 @@ def scaffold_frontend(
     frontend: str,
     social_login: str,
     project_name: str,
-    secrets: Dict,
+    secrets: Optional[Dict[str, str]] = None,
 ) -> None:
-    """
-    Set up the React frontend with a pre-configured package.json, install dependencies,
-    copy necessary templates, and configure social login components based on user input.
-
-    Args:
-        template_dir (str): The directory containing template files for scaffolding.
-        frontend (str): The frontend framework choice (e.g., "bootstrap", "material").
-        social_login (str): The social login option selected by the user.
-                            Expected values: "google", "github", "both", or "none".
-
-    Raises:
-        SystemExit: Exits the program if any subprocess command fails or
-                    if file operations encounter errors.
-    """
+    """Scaffold the React frontend and install necessary dependencies."""
     try:
         # Step 1: Check Node.js version
         click.echo("Checking Node.js version...")
@@ -129,327 +118,202 @@ def scaffold_frontend(
 
         # Step 2: Create a new Vite project with React template
         click.echo("Setting up React frontend with Vite...")
-        subprocess.run(
-            ["npm", "create", "vite@4.4.0", "frontend", "--", "--template", "react"],
-            check=True,
-            text=True,
-        )
+        subprocess.run(NPM_CREATE_VITE_CMD, check=True, text=True)
         click.echo("Vite React project 'frontend' created successfully.")
 
     except subprocess.CalledProcessError as e:
         click.echo(f"Failed to create Vite React project.\nError: {e.stderr.strip()}")
         sys.exit(1)
-    except Exception as e:
-        click.echo(f"Unexpected error during Vite project creation: {e}")
-        sys.exit(1)
 
     try:
-        # Step 3: Replace the default package.json with the pre-configured one
+        # Step 3: Replace default package.json
         os.chdir("frontend")
         frontend_template_dir: str = os.path.join(template_dir, "frontend")
 
-        try:
-            # Step 5: Copy templates for frontend
-            click.echo("Copying frontend templates...")
-            copy_templates(frontend_template_dir, os.getcwd(), "frontend")
+        click.echo("Copying frontend templates...")
+        copy_templates(frontend_template_dir, os.getcwd(), "frontend")
 
-            # Delete gitignore
-            delete_file(os.path.join(os.getcwd(), ".gitignore"))
+        # Step 4: Delete unnecessary files
+        delete_file(os.path.join(os.getcwd(), ".gitignore"))
+        delete_file(os.path.join(os.getcwd(), ".eslintrc.cjs"))
+        delete_file(os.path.join(os.getcwd(), "src", "App.css"))
+        delete_file(os.path.join(os.getcwd(), "src", "index.css"))
 
-            # Delete default ESLint file
-            delete_file(os.path.join(os.getcwd(), ".eslintrc.cjs"))
-
-            # Delete default Apps.css file
-            delete_file(os.path.join(os.getcwd(), "src", "App.css"))
-
-            # Delete default index.css file
-            delete_file(os.path.join(os.getcwd(), "src", "index.css"))
-
-            click.echo("Frontend templates generated successfully.")
-
-        except FileNotFoundError as e:
-            click.echo(f"Template directory not found: {e}")
-            sys.exit(1)
-        except PermissionError as e:
-            click.echo(f"Permission denied while copying frontend templates: {e}")
-            sys.exit(1)
-        except Exception as e:
-            click.echo(f"Unexpected error during copying frontend templates: {e}")
-            sys.exit(1)
-
-        click.secho(
-            "Updating package.json with pre-configured package.json...", fg="yellow"
-        )
-
-        package_json_file: str = os.path.join(os.getcwd(), "package.json")
-
-        # Add frontend-specific dependencies
+        # Step 5: Add frontend dependencies
         if frontend.lower() in FRONTEND_DEPENDENCIES:
             frontend_dependencies = FRONTEND_DEPENDENCIES[frontend.lower()]
-            update_package_json(package_json_file, frontend_dependencies)
+            update_package_json("package.json", frontend_dependencies)
         else:
-            click.secho(
-                f"Unknown frontend framework '{frontend}'. Skipping additional dependencies.",
-                fg="yellow",
+            click.echo(
+                f"Unknown frontend framework '{frontend}'. Skipping additional dependencies."
             )
 
-    except FileNotFoundError as e:
-        click.secho(f"File not found during package.json replacement: {e}", fg="red")
-        sys.exit(1)
-    except PermissionError as e:
-        click.secho(f"Permission denied during package.json replacement: {e}", fg="red")
-        sys.exit(1)
-    except Exception as e:
-        click.secho(f"Unexpected error during package.json replacement: {e}", fg="red")
-        sys.exit(1)
-
-    try:
-        # Step 4: Install dependencies from package.json
+        # Step 6: Install frontend dependencies
         click.echo("Installing frontend dependencies from package.json...")
-        subprocess.run(
-            ["npm", "install"],
-            check=True,
-            text=True,
-        )
+        subprocess.run(NPM_INSTALL_CMD, check=True, text=True)
         click.echo("Frontend dependencies installed successfully.")
 
-    except subprocess.CalledProcessError as e:
+        # Step 7: Replace Project name in index.html and NavBar.jsx
+        # based on the selected framework
         click.echo(
-            f"Failed to install frontend dependencies.\nError: {e.stderr.strip()}"
+            f"Generating index.html and Navbar based on selected frontend framework: {frontend}..."
         )
-        sys.exit(1)
-    except Exception as e:
-        click.echo(f"Unexpected error during frontend dependencies installation: {e}")
-        sys.exit(1)
 
-    try:
-        # Step 6: Replace Navbar based on the selected framework
-        click.secho(
-            "Generating Navbar based on selected frontend framework...", fg="yellow"
+        replace_placeholder_in_file(
+            os.path.join(os.getcwd(), "index.html"), "{{ PROJECT_NAME }}", project_name
         )
+
         components_dir: str = os.path.join("src", "components")
         os.makedirs(components_dir, exist_ok=True)
 
-        helper_files_dir: str = os.path.join(template_dir, "helper_files")
+        # Set project name in NavBar.jsx
         navbar_template: str = os.path.join(
-            helper_files_dir, "navbar", f"{frontend.title()}Navbar.jsx"
+            template_dir, "helper_files", "navbar", f"{frontend.title()}Navbar.jsx"
         )
         dest_navbar: str = os.path.join(components_dir, "Navbar.jsx")
-
-        if not os.path.isfile(navbar_template):
-            click.escho(f"Navbar template not found at '{navbar_template}'.", fg="red")
-            sys.exit(1)
-
         shutil.copy(navbar_template, dest_navbar)
-
-        # Replace main.jsx if bootstrap framework
-        # was selected
-        if frontend == "material":
-            # Copy files for material framework
-            copy_template_file(
-                os.path.join(helper_files_dir, "mui", "mui_main.jsx"),
-                os.path.join("src", "main.jsx"),
-                "main.jsx file",
-            )
-
-            copy_template_file(
-                os.path.join(helper_files_dir, "mui", "mui_main.css"),
-                os.path.join("src", "styles", "main.css"),
-                "main.css file",
-            )
-
-            copy_template_file(
-                os.path.join(helper_files_dir, "mui", "Login.jsx"),
-                os.path.join("src", "pages", "Login.jsx"),
-                "Login.jsx file",
-            )
-
-            copy_template_file(
-                os.path.join(helper_files_dir, "mui", "Register.jsx"),
-                os.path.join("src", "pages", "Register.jsx"),
-                "Register.jsx file",
-            )
-
-        # Replace the placeholder with the actual project name
         replace_placeholder_in_file(dest_navbar, "{{ PROJECT_NAME }}", project_name)
 
-        click.secho("Navbar component generated successfully.", fg="yellow")
+        click.echo("Navbar component generated successfully.")
 
-    except FileNotFoundError as e:
-        click.echo(f"Navbar template file not found: {e}")
-        sys.exit(1)
-    except PermissionError as e:
-        click.echo(f"Permission denied while replacing Navbar: {e}")
-        sys.exit(1)
-    except Exception as e:
-        click.echo(f"Unexpected error during Navbar replacement: {e}")
-        sys.exit(1)
-
-    try:
-        # Step 7: Write the social_login value into the .env file
-        click.echo("Writing social_login configuration to .env file...")
-        with open(".env", "w") as env_file:
-            env_file.write(f"VITE_SOCIAL_LOGIN={social_login}\n")
-
-            if secrets:
-                env_file.write(
-                    f'VITE_GOOGLE_CLIENT_ID={secrets.get("GOOGLE_CLIENT_ID")}\n'
-                    f'VITE_GOOGLE_CLIENT_SECRET={secrets.get("VITE_GOOGLE_CLIENT_SECRET")}\n'
-                )
-
-        click.echo(".env file created with social_login configuration.")
-
-    except IOError as e:
-        click.echo(f"IOError while writing to .env file: {e}")
-        sys.exit(1)
-    except Exception as e:
-        click.echo(f"Unexpected error while writing to .env file: {e}")
-        sys.exit(1)
-
-    try:
-        # Step 8: Handle authentication buttons based on social login choice
-        if social_login.lower() != "none":
+        # Step 8: Handle social login buttons if applicable
+        if social_login != "none":
             click.echo(
                 "Setting up authentication buttons based on social login choice..."
             )
-            auth_buttons_template_dir: str = os.path.join(
-                template_dir, "helper_files", "auth_buttons"
-            )
-            dest_auth_buttons_dir: str = os.path.join(
-                "src", "components", "auth_buttons"
-            )
-            os.makedirs(dest_auth_buttons_dir, exist_ok=True)
+            setup_auth_buttons(template_dir, social_login)
 
-            main_auth_button_template: str = os.path.join(
-                auth_buttons_template_dir, "AuthButtons.jsx"
-            )
-            dest_main_auth_button: str = os.path.join(
-                dest_auth_buttons_dir, "AuthButtons.jsx"
-            )
+        # Step 9: Write social_login value into .env file
+        write_to_env_file(social_login, secrets)
 
-            if not os.path.isfile(main_auth_button_template):
-                click.echo(
-                    f"AuthButtons.jsx template not found at '{main_auth_button_template}'."
-                )
-                sys.exit(1)
+        # Step 10: Finalize setup with additional files (.gitignore, LICENSE, README.md)
+        finalise_setup(template_dir, frontend)
 
-            shutil.copy(main_auth_button_template, dest_main_auth_button)
-
-            social_login_button_template: str = os.path.join(
-                auth_buttons_template_dir, f"{social_login.title()}LoginButton.jsx"
-            )
-            dest_social_login_button: str = os.path.join(
-                dest_auth_buttons_dir, f"{social_login.title()}LoginButton.jsx"
-            )
-
-            if not os.path.isfile(social_login_button_template):
-                click.echo(
-                    f"{social_login.title()}LoginButton.jsx template not found at '{social_login_button_template}'."
-                )
-                sys.exit(1)
-
-            shutil.copy(social_login_button_template, dest_social_login_button)
-        else:
-            click.echo("No social login selected. Skipping auth buttons creation.")
-
-    except FileNotFoundError as e:
-        click.echo(f"Authentication button template file not found: {e}")
-        sys.exit(1)
-    except PermissionError as e:
-        click.echo(f"Permission denied while copying authentication buttons: {e}")
-        sys.exit(1)
     except Exception as e:
-        click.echo(f"Unexpected error during authentication buttons setup: {e}")
+        click.echo(f"Unexpected error during frontend scaffolding: {e}")
         sys.exit(1)
 
-    try:
-        # Replace Title in index.html file
-        index_template = os.path.join(os.getcwd(), "index.html")
-        if os.path.exists(index_template):
-            replace_placeholder_in_file(
-                index_template, "{{ PROJECT_NAME }}", project_name
+
+def setup_auth_buttons(template_dir: str, social_login: str) -> None:
+    """Handle setup of social login buttons."""
+    auth_buttons_template_dir: str = os.path.join(
+        template_dir, "helper_files", "auth_buttons"
+    )
+    dest_auth_buttons_dir: str = os.path.join("src", "components", "auth_buttons")
+    os.makedirs(dest_auth_buttons_dir, exist_ok=True)
+
+    main_auth_button_template: str = os.path.join(
+        auth_buttons_template_dir, "AuthButtons.jsx"
+    )
+    shutil.copy(
+        main_auth_button_template,
+        os.path.join(dest_auth_buttons_dir, "AuthButtons.jsx"),
+    )
+
+    social_login_button_template: str = os.path.join(
+        auth_buttons_template_dir, f"{social_login.title()}LoginButton.jsx"
+    )
+    shutil.copy(
+        social_login_button_template,
+        os.path.join(dest_auth_buttons_dir, f"{social_login.title()}LoginButton.jsx"),
+    )
+    click.echo(f"{social_login} login button set up.")
+
+
+def write_to_env_file(social_login: str, secrets: Optional[Dict[str, str]]) -> None:
+    """Write the social login information to the .env file."""
+    with open(".env", "w") as env_file:
+        env_file.write(f"VITE_SOCIAL_LOGIN={social_login}\n")
+
+        if social_login == "google" and secrets:
+            env_file.write(
+                f'VITE_GOOGLE_CLIENT_ID={secrets.get("GOOGLE_CLIENT_ID", "")}\n'
             )
-        else:
-            click.echo(f"Error: Template file not found - {index_template}")
-            sys.exit(1)
+            env_file.write(
+                f'VITE_GOOGLE_CLIENT_SECRET={secrets.get("VITE_GOOGLE_CLIENT_SECRET", "")}\n'
+            )
 
-        os.chdir("..")
-        click.echo("Returned to the project root directory.")
+    click.echo(".env file created with social_login configuration.")
 
-        click.secho("Generating .gitignore, LICENSE, and README.md files", fg="yellow")
-        current_dir = os.getcwd()
+    os.chdir("..")
+    click.echo("Returned to the project root directory.")
 
-        # Generate .gitignore
-        gitignore_template = os.path.join(helper_files_dir, "gitignore.txt")
+
+def finalise_setup(template_dir: str, frontend: str) -> None:
+    """Finalize the project setup by generating necessary files."""
+    click.echo("Generating .gitignore, LICENSE, and README.md files...")
+
+    current_dir = os.getcwd()
+    src_dir = os.path.join(current_dir, "frontend", "src")
+    helper_files_dir = os.path.join(template_dir, "helper_files")
+
+    # Generate .gitignore
+    copy_template_file(
+        os.path.join(helper_files_dir, "gitignore.txt"),
+        os.path.join(current_dir, ".gitignore"),
+        ".gitignore file",
+    )
+
+    # Generate LICENSE
+    copy_template_file(
+        os.path.join(helper_files_dir, "LICENSE"),
+        os.path.join(current_dir, "LICENSE"),
+        "LICENSE file",
+    )
+
+    # Generate README.md
+    copy_template_file(
+        os.path.join(helper_files_dir, "README.md"),
+        os.path.join(current_dir, "README.md"),
+        "README.md file",
+    )
+
+    # Generate ESLint file
+    copy_template_file(
+        os.path.join(helper_files_dir, "eslintrc.json"),
+        os.path.join(current_dir, "frontend", ".eslintrc.json"),
+        ".eslintrc.json file",
+    )
+
+    # Replace main.jsx if bootstrap framework
+    # was selected
+    if frontend == "material":
+        # Copy files for material framework
         copy_template_file(
-            gitignore_template,
-            os.path.join(current_dir, ".gitignore"),
-            ".gitignore file",
+            os.path.join(helper_files_dir, "mui", "mui_main.jsx"),
+            os.path.join(src_dir, "main.jsx"),
+            "main.jsx file",
         )
 
-        # Generate LICENSE
-        licence_template = os.path.join(helper_files_dir, "LICENSE")
         copy_template_file(
-            licence_template, os.path.join(current_dir, "LICENSE"), "LICENSE file"
+            os.path.join(helper_files_dir, "mui", "mui_main.css"),
+            os.path.join(src_dir, "styles", "main.css"),
+            "main.css file",
         )
 
-        # Generate README.md
-        readme_template = os.path.join(helper_files_dir, "README.md")
         copy_template_file(
-            readme_template, os.path.join(current_dir, "README.md"), "README.md file"
+            os.path.join(helper_files_dir, "mui", "Login.jsx"),
+            os.path.join(src_dir, "pages", "Login.jsx"),
+            "Login.jsx file",
         )
 
-        # Generate ESlint file
-        eslint_template = os.path.join(helper_files_dir, "eslintrc.json")
         copy_template_file(
-            eslint_template,
-            os.path.join(current_dir, "frontend", ".eslintrc.json"),
-            ".eslintrc.json file",
+            os.path.join(helper_files_dir, "mui", "Register.jsx"),
+            os.path.join(src_dir, "pages", "Register.jsx"),
+            "Register.jsx file",
         )
-
-    except FileNotFoundError as e:
-        click.echo(f"Error changing directory back to project root: {e}")
-        sys.exit(1)
-    except PermissionError as e:
-        click.echo(
-            f"Permission denied while changing directory back to project root: {e}"
-        )
-        sys.exit(1)
-    except Exception as e:
-        click.echo(f"Unexpected error while returning to project root: {e}")
-        sys.exit(1)
 
 
 def update_package_json(file_path: str, updates: dict) -> None:
-    """
-    Update specific fields in a package.json file.
-
-    Args:
-        file_path (str): Path to the package.json file.
-        updates (dict): Dictionary containing fields to update.
-
-    Raises:
-        FileNotFoundError: If the package.json file does not exist.
-        json.JSONDecodeError: If the package.json is not valid JSON.
-        IOError: If there's an error reading or writing the file.
-    """
-    if not os.path.isfile(file_path):
-        raise FileNotFoundError(f"package.json not found at '{file_path}'.")
-
+    """Update specific fields in package.json."""
     try:
         with open(file_path, "r") as file:
             package_data = json.load(file)
 
-        # Update the fields
-        for key, value in updates.items():
-            if key == "dependencies":
-                # Update dependencies
-                if "dependencies" not in package_data:
-                    package_data["dependencies"] = {}
-
-                package_data["dependencies"].update(value)
-            else:
-                package_data[key] = value
+        # Update dependencies
+        if "dependencies" not in package_data:
+            package_data["dependencies"] = {}
+        package_data["dependencies"].update(updates)
 
         with open(file_path, "w") as file:
             json.dump(package_data, file, indent=2)
