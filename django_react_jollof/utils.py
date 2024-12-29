@@ -85,14 +85,12 @@ def copy_templates(src: str, dest: str, directory: str) -> None:
 
 
 FRONTEND_DEPENDENCIES = {
-    "bootstrap": {"dependencies": {"react-bootstrap": "^2.7.4", "bootstrap": "^5.2.3"}},
+    "bootstrap": {"react-bootstrap": "^2.7.4", "bootstrap": "^5.2.3"},
     "material": {
-        "dependencies": {
-            "@mui/material": "^5.11.6",
-            "@emotion/react": "^11.10.6",
-            "@emotion/styled": "^11.10.6",
-            "@mui/icons-material": "^5.16.13",
-        }
+        "@mui/material": "^5.11.6",
+        "@emotion/react": "^11.10.6",
+        "@emotion/styled": "^11.10.6",
+        "@mui/icons-material": "^5.16.13",
     },
 }
 

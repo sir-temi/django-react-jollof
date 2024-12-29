@@ -82,7 +82,7 @@ const NavBar = () => {
                             color: "inherit",
                         }}
                     >
-                        Jesjay
+                        {{ PROJECT_NAME }}
                     </Link>
                 </Typography>
                 {!isLoggedIn && (
