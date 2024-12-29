@@ -1,41 +1,35 @@
 import sys
 import os
 from textwrap import dedent
-from typing import Dict, List
-import os
+from typing import Dict, List, Optional
 import subprocess
-
 import click
 
 from django_react_jollof.auth import get_client_secrets, write_env_file
-from django_react_jollof.utils import copy_templates
+from django_react_jollof.utils import copy_templates, delete_file
+
+
+def run_subprocess_command(
+    command: List[str], success_message: str, error_message: str
+) -> None:
+    """Helper function to run subprocess commands and handle errors."""
+    try:
+        result = subprocess.run(command, check=True, text=True, capture_output=True)
+        click.echo(success_message)
+        click.echo(result.stdout)
+    except subprocess.CalledProcessError as e:
+        click.echo(f"{error_message}: {e.stderr.strip()}")
+        sys.exit(1)
 
 
 def modify_urls_py(project_dir: str) -> None:
-    """
-    Modifies the main urls.py file to include necessary imports and API URL patterns.
-
-    This function performs the following actions:
-    1. Backs up the existing urls.py file.
-    2. Reads the current content of urls.py.
-    3. Appends required imports and URL patterns if they are not already present.
-    4. Writes the updated content back to urls.py.
-
-    Args:
-        project_dir (str): The root directory of the project where the backend folder resides.
-
-    Raises:
-        FileNotFoundError: If the urls.py file does not exist at the specified path.
-        IOError: If there is an error reading or writing to the urls.py file.
-    """
+    """Modify urls.py to include necessary imports and API URL patterns."""
     urls_path = os.path.join(project_dir, "backend", "urls.py")
 
     try:
-        # Read the file content
         with open(urls_path, "r") as file:
             lines = file.readlines()
 
-        # Create new content with correct imports
         new_content = [
             "from django.contrib import admin\n",
             "from django.urls import path, include\n",
@@ -46,26 +40,19 @@ def modify_urls_py(project_dir: str) -> None:
             "]\n",
         ]
 
-        # Write the new content
         with open(urls_path, "w") as file:
             file.writelines(new_content)
 
-        print("Successfully modified urls.py")
+        click.echo("Successfully modified urls.py")
 
     except Exception as e:
-        print(f"Error modifying urls.py: {str(e)}")
+        click.echo(f"Error modifying urls.py: {str(e)}")
         raise
 
 
 def update_settings(social_login: str) -> None:
-    """
-    Modify settings.py based on user input to integrate required applications and configurations.
-
-    Args:
-        social_login (str): The social login option selected by the user.
-                            Expected values: "google", "github", "both", or "none".
-    """
-    settings_path: str = os.path.join("backend", "settings.py")
+    """Modify settings.py based on user input to integrate required applications and configurations."""
+    settings_path = os.path.join("backend", "settings.py")
 
     if not os.path.isfile(settings_path):
         click.echo(f"Error: '{settings_path}' does not exist.")
@@ -73,14 +60,12 @@ def update_settings(social_login: str) -> None:
 
     try:
         with open(settings_path, "a") as file:
-            # Add common configurations
             common_config = dedent(
                 """
                 # Set by django-react-jollof
 
                 import os
 
-                # Installed apps
                 INSTALLED_APPS += [
                     "corsheaders",
                     "rest_framework",
@@ -89,25 +74,20 @@ def update_settings(social_login: str) -> None:
                     "allauth.socialaccount",
                 ]
 
-                # Authentication backends
                 AUTHENTICATION_BACKENDS = [
                     "allauth.account.auth_backends.AuthenticationBackend",
                 ]
 
-                # Site ID
                 SITE_ID = 1
 
-                # Django Allauth configuration
                 ACCOUNT_EMAIL_REQUIRED = True
                 ACCOUNT_USERNAME_REQUIRED = False
                 ACCOUNT_AUTHENTICATION_METHOD = "email"
                 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-                # Middleware for CORS
                 MIDDLEWARE.insert(0, "corsheaders.middleware.CorsMiddleware")
                 MIDDLEWARE.append("allauth.account.middleware.AccountMiddleware")
 
-                # REST Framework Configuration
                 REST_FRAMEWORK = {
                     "DEFAULT_AUTHENTICATION_CLASSES": [
                         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -117,26 +97,21 @@ def update_settings(social_login: str) -> None:
                     ],
                 }
 
-                # CORS Configuration
                 CORS_ALLOWED_ORIGINS = [
                     "http://localhost:5173",  # React frontend
                 ]
-            """
+                """
             )
             file.write(common_config)
 
-            # Add social login configurations only if a social login provider is selected
             if social_login != "none":
-                # Social account providers section
                 social_config_start = dedent(
                     """
-                    # Social account providers
                     SOCIALACCOUNT_PROVIDERS = {
                 """
                 )
                 file.write(social_config_start)
 
-                # Google configuration
                 if social_login == "google":
                     google_config = dedent(
                         f"""
@@ -155,11 +130,11 @@ def update_settings(social_login: str) -> None:
                                 'key': '',
                             }}
                         }},
-                    """
+                        """
                     )
                     file.write(google_config)
 
-                file.write("}\n")  # Close the SOCIALACCOUNT_PROVIDERS dictionary
+                file.write("}\n")
 
             click.echo(f"Updated '{settings_path}' with the selected configurations.")
 
@@ -168,88 +143,20 @@ def update_settings(social_login: str) -> None:
         sys.exit(1)
 
 
-def modify_urls_py(project_dir: str) -> None:
-    """
-    Modifies the main urls.py file to include necessary imports and API URL patterns.
-
-    This function performs the following actions:
-    1. Backs up the existing urls.py file.
-    2. Reads the current content of urls.py.
-    3. Appends required imports and URL patterns if they are not already present.
-    4. Writes the updated content back to urls.py.
-
-    Args:
-        project_dir (str): The root directory of the project where the backend folder resides.
-
-    Raises:
-        FileNotFoundError: If the urls.py file does not exist at the specified path.
-        IOError: If there is an error reading or writing to the urls.py file.
-    """
-    urls_path = os.path.join(project_dir, "backend", "urls.py")
-
-    try:
-        # Read the file content
-        with open(urls_path, "r") as file:
-            lines = file.readlines()
-
-        # Create new content with correct imports
-        new_content = [
-            "from django.contrib import admin\n",
-            "from django.urls import path, include\n",
-            "\n",
-            "urlpatterns = [\n",
-            '    path("admin/", admin.site.urls),\n',
-            '    path("api/", include("users.urls")), # Added by django-react-jollof\n',
-            "]\n",
-        ]
-
-        # Write the new content
-        with open(urls_path, "w") as file:
-            file.writelines(new_content)
-
-        print("Successfully modified urls.py")
-
-    except Exception as e:
-        print(f"Error modifying urls.py: {str(e)}")
-        raise
-
-
-def scaffold_backend(template_dir: str, social_login: str) -> Dict | None:
-    """
-    Set up the Django backend by creating the project, installing dependencies,
-    configuring settings, and applying migrations.
-
-    Args:
-        template_dir (str): The directory containing template files for scaffolding.
-        social_login (str): The social login option selected by the user.
-                            Expected values: "google", "github", "both", or "none".
-
-    Raises:
-        SystemExit: Exits the program if any subprocess command fails or
-                    if file operations encounter errors.
-    """
+def scaffold_backend(template_dir: str, social_login: str) -> Optional[Dict[str, str]]:
+    """Set up the Django backend by creating the project, installing dependencies, configuring settings, and applying migrations."""
     secrets = None
 
     try:
         click.echo("Setting up Django backend...")
 
         # Start Django project
-        subprocess.run(
+        run_subprocess_command(
             ["django-admin", "startproject", "backend"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
+            "Django project 'backend' created successfully.",
+            "Failed to create Django project 'backend'",
         )
-        click.echo("Django project 'backend' created successfully.")
 
-    except subprocess.CalledProcessError as e:
-        click.echo(
-            f"Failed to create Django project 'backend'.\nError: {e.stderr.strip()}"
-        )
-        sys.exit(1)
-
-    try:
         # Change directory to 'backend'
         os.chdir("backend")
         click.echo("Changed directory to 'backend'.")
@@ -261,56 +168,36 @@ def scaffold_backend(template_dir: str, social_login: str) -> Dict | None:
         click.echo("Permission denied while changing directory to 'backend'.")
         sys.exit(1)
 
-    try:
-        # Install backend dependencies
-        click.echo("Installing backend dependencies...")
-        dependencies: List[str] = [
-            "djangorestframework",
-            "djangorestframework-simplejwt",
-            "django-cors-headers",
-            "django-allauth",
-            "python-decouple",
-        ]
+    # Install backend dependencies
+    click.echo("Installing backend dependencies...")
+    dependencies = [
+        "djangorestframework",
+        "djangorestframework-simplejwt",
+        "django-cors-headers",
+        "django-allauth",
+        "python-decouple",
+    ]
 
-        # Upgrade pip first
-        click.echo("Upgrading pip...")
-        subprocess.run(
-            ["pip", "install", "--upgrade", "pip"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        click.echo("Pip upgraded successfully.")
+    run_subprocess_command(
+        ["pip", "install", "--upgrade", "pip"],
+        "Pip upgraded successfully.",
+        "Failed to upgrade pip",
+    )
 
-        # Install the dependencies
-        click.echo(f"Installing dependencies: {', '.join(dependencies)}")
-        subprocess.run(
-            ["pip", "install"] + dependencies,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        click.echo("Backend dependencies installed successfully.")
+    run_subprocess_command(
+        ["pip", "install"] + dependencies,
+        "Backend dependencies installed successfully.",
+        "Failed to install backend dependencies",
+    )
 
-        # Save the dependencies to requirements.txt for future reference
-        click.echo("Saving dependencies to requirements.txt...")
-        with open("requirements.txt", "w") as f:
-            f.write("\n".join(dependencies))
-        click.echo("Dependencies saved to requirements.txt.")
-
-    except subprocess.CalledProcessError as e:
-        click.echo(
-            f"Failed to install backend dependencies.\nError: {e.stderr.strip()}"
-        )
-        sys.exit(1)
-    except IOError as e:
-        click.echo(f"IOError while writing to requirements.txt: {e}")
-        sys.exit(1)
+    # Save dependencies to requirements.txt
+    click.echo("Saving dependencies to requirements.txt...")
+    with open("requirements.txt", "w") as f:
+        f.write("\n".join(dependencies))
+    click.echo("Dependencies saved to requirements.txt.")
 
     try:
-        # Update backend.urls
+        # Modify backend.urls
         click.echo("Modifying backend URLs...")
         modify_urls_py(os.getcwd())
 
@@ -318,9 +205,9 @@ def scaffold_backend(template_dir: str, social_login: str) -> Dict | None:
         click.echo(f"Error modifying urls.py: {e}")
         sys.exit(1)
 
+    # Copy backend templates
     try:
-        # Copy backend templates
-        backend_template_dir: str = os.path.join(template_dir, "backend")
+        backend_template_dir = os.path.join(template_dir, "backend")
         click.echo(f"Copying backend templates from '{backend_template_dir}'...")
         copy_templates(backend_template_dir, os.getcwd(), "backend")
         click.secho("Backend templates generated successfully.", fg="green")
@@ -337,14 +224,13 @@ def scaffold_backend(template_dir: str, social_login: str) -> Dict | None:
 
     if social_login.lower() != "none":
         try:
-            # Prompt for client secrets and update settings.py
+            # Handle social login
             click.echo("Prompting for social login client secrets...")
-            secrets: Dict[str, str] = get_client_secrets(social_login)
+            secrets = get_client_secrets(social_login)
             click.secho("Writing secrets to .env file...", fg="yellow")
             write_env_file(secrets)
             click.secho(".env file created successfully.", fg="yellow")
 
-            # Update settings.py with social login configurations
             click.secho(
                 "Updating settings.py with social login configurations...", fg="yellow"
             )
