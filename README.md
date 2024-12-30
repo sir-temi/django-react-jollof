@@ -278,11 +278,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📣 Connect with Us
+## 📣 Connect with Me
 
 Feel free to open an issue on GitHub for bugs, feature requests, or questions.
 
-If you find **Django-React-Jollof** helpful, please give the repository a ⭐ on [GitHub](https://github.com/sir-temi/django-react-jollof). Your support helps us grow and improve!
+If you find **Django-React-Jollof** helpful, please give the repository a ⭐ on [GitHub](https://github.com/sir-temi/django-react-jollof). Thank you!
 
 ### 🌐 Useful Links
 
