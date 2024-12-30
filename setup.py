@@ -6,14 +6,15 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="django-react-jollof",  # Unique name for your package
-    version="1.0.0",  # Version of your package
+    version="1.0.1",  # Version of your package
     author="Temitope Kayode",  # Your name
     author_email="cwt@temilimited.com",  # Your email
     description="A CLI tool to scaffold Django + React projects with options for social login and styling frameworks.",
     long_description=long_description,  # Use the README for the long description
     long_description_content_type="text/markdown",  # Specify Markdown format
     url="https://github.com/sir-temi/django-react-jollof",  # Link to your repository
-    license="MIT",  # The license type
+    license="MIT",  # License type
+    license_files=["LICENSE"],  # Explicitly include the license
     packages=find_packages(
         exclude=["tests", "*.tests", "*.tests.*", "tests.*"]
     ),  # Automatically find all packages
@@ -32,7 +33,6 @@ setup(
     ],
     extras_require={
         "dev": [
-            "pytest>=7.0",  # For testing
             "flake8>=4.0",  # For linting
         ]
     },
@@ -45,20 +45,20 @@ setup(
         "Development Status :: 4 - Beta",  # Package maturity
         "Environment :: Console",
         "Framework :: Django",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     keywords="django react cli scaffolding jwt social-auth",  # Keywords for discoverability
-    python_requires=">=3.6",  # Minimum Python version required
+    python_requires=">=3.10",  # Minimum Python version required
     project_urls={
         "Bug Tracker": "https://github.com/sir-temi/django-react-jollof/issues",
         "Documentation": "https://github.com/sir-temi/django-react-jollof#readme",
         "Source Code": "https://github.com/sir-temi/django-react-jollof",
+        "Changelog": "https://github.com/sir-temi/django-react-jollof/releases",
     },
 )
