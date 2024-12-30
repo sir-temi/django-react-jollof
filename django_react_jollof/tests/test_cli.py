@@ -76,10 +76,10 @@ class TestCLI(unittest.TestCase):
             f"Invalid choice '3'! Please choose a valid number option", result.output
         )
 
-    @patch("subprocess.run")
+    @patch("django_react_jollof.backend.update_settings")
     @patch("django_react_jollof.backend.write_env_file")  # Mock write_env_file
     @patch("django_react_jollof.backend.get_client_secrets")  # Mock get_client_secrets
-    @patch("django_react_jollof.backend.subprocess.run")  # Mock subprocess.run
+    @patch("subprocess.run")
     @patch("django_react_jollof.backend.modify_urls_py")  # Mock modify_urls_py
     @patch(
         "django_react_jollof.backend.run_subprocess_command"
@@ -99,6 +99,7 @@ class TestCLI(unittest.TestCase):
         mock_subprocess_run,
         mock_get_secrets,
         mock_write_env_file,
+        mock_update_settings,
     ):
         """Test the `scaffold_project` function."""
 
@@ -112,6 +113,7 @@ class TestCLI(unittest.TestCase):
             "GOOGLE_CLIENT_ID": "test_id",
             "GOOGLE_CLIENT_SECRET": "test_secret",
         }
+        mock_update_settings.return_value = None
 
         # Execute the function
         scaffold_project("TestProject", "bootstrap", "google")
@@ -162,6 +164,8 @@ class TestCLI(unittest.TestCase):
                 "GOOGLE_CLIENT_SECRET": "test_secret",
             }
         )
+
+        mock_update_settings.assert_called_once_with("google")
 
         # Assertions for frontend operations
         mock_scaffold_frontend.assert_called_once_with(
