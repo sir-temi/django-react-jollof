@@ -4,8 +4,7 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/django-react-jollof)
 ![Python Versions](https://img.shields.io/pypi/pyversions/django-react-jollof)
 ![License](https://img.shields.io/pypi/l/django-react-jollof)
-![Build Status](https://github.com/sir-temi/django-react-jollof/actions/workflows/test.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/sir-temi/django-react-jollof/badge.svg?branch=main)](https://coveralls.io/github/sir-temi/django-react-jollof?branch=main)
+![Build Status](https://github.com/sir-temi/django-react-jollof/actions/workflows/ci.yml/badge.svg)
 
 Welcome to **Django-React-Jollof (DRJ)**! This package scaffolds a fully functional full-stack web application with **Django** for the backend and **React** for the frontend. It simplifies the entire setup process by automating key tasks like configuration, database migrations, API integration, and dependency installation.
 
