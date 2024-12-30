@@ -1,8 +1,8 @@
 # 🥘 Django-React-Jollof
 
+![Python Versions](https://img.shields.io/pypi/pyversions/django-react-jollof)
 ![PyPI](https://img.shields.io/pypi/v/django-react-jollof)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/django-react-jollof)
-![Python Versions](https://img.shields.io/pypi/pyversions/django-react-jollof)
 ![License](https://img.shields.io/pypi/l/django-react-jollof)
 ![Build Status](https://github.com/sir-temi/django-react-jollof/actions/workflows/ci.yml/badge.svg)
 
