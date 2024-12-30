@@ -1,5 +1,6 @@
-djangorestframework
-djangorestframework-simplejwt
-django-cors-headers
-django-allauth
-python-decouple
+click==8.1.8
+django-allauth==65.3.1
+django-cors-headers==4.6.0
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+python-decouple==3.8
