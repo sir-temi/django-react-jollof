@@ -71,7 +71,7 @@ def replace_placeholder_in_file(
             )
             return
 
-        updated_content: str = content.replace(placeholder, replacement.title())
+        updated_content: str = content.replace(placeholder, replacement)
 
         with open(file_path, "w") as file:
             file.write(updated_content)
