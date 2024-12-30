@@ -51,6 +51,7 @@ class TestFrontendFunctions(unittest.TestCase):
         with self.assertRaises(SystemExit):
             check_node_version()
 
+    @patch("django_react_jollof.frontend.shutil.copy")
     @patch("os.getcwd", return_value="frontend")
     @patch("django_react_jollof.frontend.copy_template_file")  # Mock copy_template_file
     @patch("django_react_jollof.frontend.write_to_env_file")
@@ -77,6 +78,7 @@ class TestFrontendFunctions(unittest.TestCase):
         mock_write_to_env_file,
         mock_copy_template_file,
         mock_getcwd,
+        mock_copy,
     ):
         """Test the full scaffold_frontend function with mocks."""
         # Mock Node.js version check to always pass
@@ -97,6 +99,7 @@ class TestFrontendFunctions(unittest.TestCase):
         mock_setup_auth_buttons.return_value = None
         mock_write_to_env_file.return_value = None
         mock_copy_template_file.return_value = None
+        mock_copy.return_value = None
 
         # Test parameters
         template_dir = "test_templates"
@@ -128,6 +131,16 @@ class TestFrontendFunctions(unittest.TestCase):
         # Assertions for template copying
         mock_copy_templates.assert_called_once_with(
             f"{template_dir}/frontend", os.getcwd(), "frontend"
+        )
+
+        # Assert Navbar template was copiied
+        mock_copy.assert_has_calls(
+            [
+                call(
+                    "test_templates/helper_files/navbar/BootstrapNavbar.jsx",
+                    "src/components/Navbar.jsx",
+                )
+            ]
         )
 
         # Assertions for file deletion
