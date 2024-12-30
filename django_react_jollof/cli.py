@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import Dict, List
 import click
 
@@ -56,11 +57,11 @@ def cook(name: str, frontend: str, social_login: str) -> None:
 
     # Validate frontend choice
     if not validate_choice(frontend, frontend_choices):
-        return  # Exit if invalid frontend choice
+        sys.exit(1)
 
     # Validate social login choice
     if not validate_choice(social_login, social_login_choices):
-        return  # Exit if invalid social login choice
+        sys.exit(1)
 
     # Map numbers to actual values
     frontend_map: Dict[int, str] = {1: "bootstrap", 2: "material"}

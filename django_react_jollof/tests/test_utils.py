@@ -1,9 +1,5 @@
 import unittest
-from unittest.mock import patch, mock_open
-import os
-import shutil
-import click
-from typing import List
+from unittest.mock import patch
 from django_react_jollof.utils import (
     validate_choice,
     copy_templates,

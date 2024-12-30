@@ -1,9 +1,6 @@
 import unittest
 from unittest.mock import patch, mock_open, MagicMock, call
 import subprocess
-import sys
-import os
-import click
 from django_react_jollof.backend import (
     run_subprocess_command,
     modify_urls_py,
