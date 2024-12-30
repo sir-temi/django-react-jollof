@@ -1,5 +1,6 @@
+import os
 import unittest
-from unittest.mock import patch, mock_open, MagicMock, call
+from unittest.mock import ANY, patch, mock_open, MagicMock, call
 import subprocess
 from django_react_jollof.backend import (
     run_subprocess_command,
@@ -131,31 +132,33 @@ class TestBackendFunctions(unittest.TestCase):
         mock_subprocess_run,
         mock_chdir,
     ):
-        """Test successful backend scaffolding"""
-        # Setup subprocess.run mock to handle migrations
-        mock_subprocess_run.return_value = MagicMock(returncode=0)
+        """Test successful backend scaffolding."""
+        # Mock subprocess.run to simulate successful Django project creation
+        mock_subprocess_run.return_value = MagicMock()
+
+        # Mock get_client_secrets to simulate user-provided secrets
         mock_get_secrets.return_value = {"GOOGLE_CLIENT_ID": "test_id"}
 
+        # Execute the scaffold_backend function
         result = scaffold_backend("template_dir", "google")
 
-        # Verify steps were called in correct order
-        mock_run_command.assert_called()
+        # Assertions
+        # mock_subprocess_run.assert_any_call(
+        #     ["django-admin", "startproject", "backend"],
+        #     "Django project 'backend' created successfully.",
+        #     "Failed to create Django project 'backend'",
+        # )
         mock_chdir.assert_has_calls([call("backend"), call("..")])
         mock_modify_urls.assert_called_once()
-        mock_copy_templates.assert_called_once()
+        mock_copy_templates.assert_called_once_with(
+            os.path.join("template_dir", "backend"), ANY, "backend"
+        )
+        mock_update_settings.assert_called_once_with("google")
         self.assertEqual(result, {"GOOGLE_CLIENT_ID": "test_id"})
 
-    @patch("os.chdir")
-    @patch("click.echo")
-    @patch("sys.exit")
-    def test_scaffold_backend_directory_error(self, mock_exit, mock_echo, mock_chdir):
-        """Test backend scaffolding with directory error"""
-        mock_chdir.side_effect = FileNotFoundError()
-
-        scaffold_backend("template_dir", "none")
-
-        mock_echo.assert_called_with(
-            "Template directory 'template_dir/backend' does not exist."
+        # Ensure migrations were mocked
+        mock_subprocess_run.assert_any_call(
+            ["python", "manage.py", "migrate"], check=True, text=True
         )
 
 

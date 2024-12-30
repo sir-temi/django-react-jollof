@@ -3,7 +3,6 @@ from unittest.mock import patch, MagicMock, call, ANY
 from click.testing import CliRunner
 
 from django_react_jollof.cli import cli, scaffold_project
-from django_react_jollof.backend import modify_urls_py
 
 
 class TestCLI(unittest.TestCase):
@@ -77,6 +76,7 @@ class TestCLI(unittest.TestCase):
             f"Invalid choice '3'! Please choose a valid number option", result.output
         )
 
+    @patch("subprocess.run")
     @patch("django_react_jollof.backend.write_env_file")  # Mock write_env_file
     @patch("django_react_jollof.backend.get_client_secrets")  # Mock get_client_secrets
     @patch("django_react_jollof.backend.subprocess.run")  # Mock subprocess.run
